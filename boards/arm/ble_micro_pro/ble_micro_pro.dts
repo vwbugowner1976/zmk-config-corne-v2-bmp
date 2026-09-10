@@ -1,0 +1,84 @@
+/*
+ * ZMK board definition for the original BLE Micro Pro (non-boost).
+ * BL654 / nRF52840, Pro Micro compatible pinout.
+ * SPDX-License-Identifier: MIT
+ */
+
+/dts-v1/;
+
+#include <nordic/nrf52840_qiaa.dtsi>
+#include "ble_micro_pro-pinctrl.dtsi"
+#include "arduino_pro_micro_pins.dtsi"
+
+/ {
+    model = "BLE Micro Pro";
+    compatible = "sekigon,ble-micro-pro";
+
+    chosen {
+        zephyr,code-partition = &code_partition;
+        zephyr,sram = &sram0;
+        zephyr,flash = &flash0;
+    };
+};
+
+&gpiote {
+    status = "okay";
+};
+
+&gpio0 {
+    status = "okay";
+};
+
+&gpio1 {
+    status = "okay";
+};
+
+&i2c0 {
+    compatible = "nordic,nrf-twi";
+    pinctrl-0 = <&i2c0_default>;
+    pinctrl-1 = <&i2c0_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
+&spi1 {
+    compatible = "nordic,nrf-spim";
+    pinctrl-0 = <&spi1_default>;
+    pinctrl-1 = <&spi1_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
+&uart0 {
+    compatible = "nordic,nrf-uarte";
+    current-speed = <115200>;
+    pinctrl-0 = <&uart0_default>;
+    pinctrl-1 = <&uart0_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
+zephyr_udc0: &usbd {
+    status = "okay";
+};
+
+&flash0 {
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        sd_partition: partition@0 {
+            reg = <0x00000000 0x00026000>;
+        };
+
+        code_partition: partition@26000 {
+            reg = <0x00026000 0x000b2000>;
+        };
+
+        storage_partition: partition@d8000 {
+            reg = <0x000d8000 0x00008000>;
+        };
+
+        boot_partition: partition@e0000 {
+            reg = <0x000e0000 0x00020000>;
+        };
+    };
+};
