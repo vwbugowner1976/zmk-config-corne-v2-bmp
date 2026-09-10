@@ -1,0 +1,12 @@
+identifier: ble_micro_pro
+name: BLE Micro Pro
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+supported:
+  - usb_device
+  - ble
+  - pwm
+  - watchdog
