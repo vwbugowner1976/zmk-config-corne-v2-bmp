@@ -2,17 +2,10 @@
 set -euo pipefail
 
 # Corne v2 + original BLE Micro Pro
-# Local build helper for the existing ZMK v0.3 workspace.
+# Local build helper for the isolated ZMK v0.3 + DYA workspace.
 #
-# IMPORTANT:
-#   ZMK_LOCAL_BUILD_ENVIRONMENT.md records the verified v0.3 flow as:
-#     cd ~/zmk-dev/v0.3
-#     source env.sh
-#     cd ~/zmk-dev/v0.3/zmk
-#     west topdir  -> ~/zmk-dev/v0.3/zmk
-#
-# Left/central is built with ZMK Studio over USB CDC ACM.
-# Right/peripheral is built normally without Studio.
+# The original ~/zmk-dev/v0.3 workspace is intentionally left untouched.
+# Run ./setup-lighting-workspace.sh once before the first Lighting build.
 #
 # Usage:
 #   ./build-local.sh          # left + right
@@ -23,9 +16,9 @@ set -euo pipefail
 
 TARGET="${1:-all}"
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE="${ZMK_WORKSPACE:-$HOME/zmk-dev/v0.3}"
+WORKSPACE="${ZMK_WORKSPACE:-$HOME/zmk-dev/corne-v2-bmp-v03}"
 ZMK_DIR="${ZMK_DIR:-$WORKSPACE/zmk}"
-ENV_SH="${ZMK_ENV_SH:-$WORKSPACE/env.sh}"
+ENV_SH="${ZMK_ENV_SH:-$HOME/zmk-dev/v0.3/env.sh}"
 BUILD_ROOT="${BUILD_ROOT:-$WORKSPACE/build/corne-v2-bmp}"
 COPY_UF2="${COPY_UF2:-$HOME/bin/copy-uf2}"
 
@@ -34,29 +27,31 @@ fail() {
     exit 1
 }
 
-[[ -d "$ZMK_DIR/app" ]] || fail "ZMK v0.3 app directory not found: $ZMK_DIR/app"
-[[ -f "$ENV_SH" ]] || fail "ZMK v0.3 env.sh not found: $ENV_SH"
+[[ -d "$ZMK_DIR/app" ]] || fail "Corne Lighting ZMK app directory not found: $ZMK_DIR/app (run ./setup-lighting-workspace.sh)"
+[[ -f "$ENV_SH" ]] || fail "Verified v0.3 env.sh not found: $ENV_SH"
 [[ -f "$PROJECT_DIR/config/corne.conf" ]] || fail "Missing config/corne.conf"
 [[ -f "$PROJECT_DIR/config/corne.keymap" ]] || fail "Missing config/corne.keymap"
 [[ -d "$PROJECT_DIR/boards/arm/ble_micro_pro" ]] || fail "Missing ble_micro_pro board definition"
 [[ -d "$ZMK_DIR/app/snippets/studio-rpc-usb-uart" ]] || fail "ZMK Studio snippet not found in this ZMK tree"
 [[ -x "$COPY_UF2" ]] || fail "copy-uf2 not found/executable: $COPY_UF2"
 
-# Verified v0.3 environment initialization.
+# Reuse the already verified Python/west + Zephyr SDK environment, but do not
+# let an inherited ZEPHYR_BASE force west back into the old workspace.
 # shellcheck disable=SC1090
 source "$ENV_SH"
+unset ZEPHYR_BASE || true
 
 WEST="$(command -v west || true)"
 [[ -n "$WEST" ]] || fail "west not found after sourcing $ENV_SH"
 
 ACTUAL_TOPDIR="$(cd "$ZMK_DIR" && west topdir 2>/dev/null || true)"
 [[ -n "$ACTUAL_TOPDIR" ]] || fail "west workspace not found from: $ZMK_DIR"
-[[ "$ACTUAL_TOPDIR" == "$ZMK_DIR" ]] || fail "Unexpected west topdir: $ACTUAL_TOPDIR (expected $ZMK_DIR)"
+[[ "$ACTUAL_TOPDIR" == "$WORKSPACE" ]] || fail "Unexpected west topdir: $ACTUAL_TOPDIR (expected $WORKSPACE)"
 
 mkdir -p "$BUILD_ROOT"
 
 echo "============================================================"
-echo " Corne v2 + BLE Micro Pro / ZMK v0.3 local build"
+echo " Corne v2 + BLE Micro Pro / ZMK v0.3 DYA local build"
 echo "============================================================"
 echo "Workspace : $WORKSPACE"
 echo "ZMK       : $ZMK_DIR"
@@ -107,13 +102,16 @@ build_half() {
     )
 
     if [[ "$studio" == "yes" ]]; then
-        args+=( -DCONFIG_ZMK_STUDIO=y )
+        args+=(
+            -DCONFIG_ZMK_STUDIO=y
+            -DCONFIG_ZMK_CUSTOM_SETTINGS_STUDIO_RPC=y
+            -DCONFIG_ZMK_STUDIO_RPC_RX_BUF_SIZE=128
+            -DCONFIG_ZMK_STUDIO_RPC_CUSTOM_SUBSYSTEM_REQUEST_PAYLOAD_MAX_BYTES=96
+        )
     fi
 
-    # Run from the verified west topdir. Merely calling the west executable from
-    # the project directory is not sufficient for this v0.3 workspace.
     (
-        cd "$ZMK_DIR"
+        cd "$ACTUAL_TOPDIR"
         west "${args[@]}"
     )
 
@@ -146,5 +144,5 @@ esac
 
 echo "============================================================"
 echo "Build complete"
-echo "Left firmware includes ZMK Studio USB RPC support."
+echo "Left firmware includes ZMK Studio + Custom Settings RPC."
 echo "============================================================"
