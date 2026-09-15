@@ -4,6 +4,13 @@ set -euo pipefail
 # Corne v2 + original BLE Micro Pro
 # Local build helper for the existing ZMK v0.3 workspace.
 #
+# IMPORTANT:
+#   ZMK_LOCAL_BUILD_ENVIRONMENT.md records the verified v0.3 flow as:
+#     cd ~/zmk-dev/v0.3
+#     source env.sh
+#     cd ~/zmk-dev/v0.3/zmk
+#     west topdir  -> ~/zmk-dev/v0.3/zmk
+#
 # Left/central is built with ZMK Studio over USB CDC ACM.
 # Right/peripheral is built normally without Studio.
 #
@@ -18,7 +25,7 @@ TARGET="${1:-all}"
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE="${ZMK_WORKSPACE:-$HOME/zmk-dev/v0.3}"
 ZMK_DIR="${ZMK_DIR:-$WORKSPACE/zmk}"
-WEST="${WEST:-$WORKSPACE/.venv/bin/west}"
+ENV_SH="${ZMK_ENV_SH:-$WORKSPACE/env.sh}"
 BUILD_ROOT="${BUILD_ROOT:-$WORKSPACE/build/corne-v2-bmp}"
 COPY_UF2="${COPY_UF2:-$HOME/bin/copy-uf2}"
 
@@ -28,12 +35,23 @@ fail() {
 }
 
 [[ -d "$ZMK_DIR/app" ]] || fail "ZMK v0.3 app directory not found: $ZMK_DIR/app"
-[[ -x "$WEST" ]] || fail "west not found/executable: $WEST"
+[[ -f "$ENV_SH" ]] || fail "ZMK v0.3 env.sh not found: $ENV_SH"
 [[ -f "$PROJECT_DIR/config/corne.conf" ]] || fail "Missing config/corne.conf"
 [[ -f "$PROJECT_DIR/config/corne.keymap" ]] || fail "Missing config/corne.keymap"
 [[ -d "$PROJECT_DIR/boards/arm/ble_micro_pro" ]] || fail "Missing ble_micro_pro board definition"
 [[ -d "$ZMK_DIR/app/snippets/studio-rpc-usb-uart" ]] || fail "ZMK Studio snippet not found in this ZMK tree"
 [[ -x "$COPY_UF2" ]] || fail "copy-uf2 not found/executable: $COPY_UF2"
+
+# Verified v0.3 environment initialization.
+# shellcheck disable=SC1090
+source "$ENV_SH"
+
+WEST="$(command -v west || true)"
+[[ -n "$WEST" ]] || fail "west not found after sourcing $ENV_SH"
+
+ACTUAL_TOPDIR="$(cd "$ZMK_DIR" && west topdir 2>/dev/null || true)"
+[[ -n "$ACTUAL_TOPDIR" ]] || fail "west workspace not found from: $ZMK_DIR"
+[[ "$ACTUAL_TOPDIR" == "$ZMK_DIR" ]] || fail "Unexpected west topdir: $ACTUAL_TOPDIR (expected $ZMK_DIR)"
 
 mkdir -p "$BUILD_ROOT"
 
@@ -42,6 +60,8 @@ echo " Corne v2 + BLE Micro Pro / ZMK v0.3 local build"
 echo "============================================================"
 echo "Workspace : $WORKSPACE"
 echo "ZMK       : $ZMK_DIR"
+echo "West      : $WEST"
+echo "West top  : $ACTUAL_TOPDIR"
 echo "Project   : $PROJECT_DIR"
 echo "Build     : $BUILD_ROOT"
 echo
@@ -61,34 +81,41 @@ build_half() {
     local studio="$4"
     local build_dir="$BUILD_ROOT/$side"
     local uf2="$build_dir/zephyr/zmk.uf2"
+    local -a args
 
     echo "------------------------------------------------------------"
     echo "Building $side: board=ble_micro_pro shield=$shield studio=$studio"
     echo "------------------------------------------------------------"
 
+    args=(
+        build
+        -p always
+        -s "$ZMK_DIR/app"
+        -d "$build_dir"
+        -b ble_micro_pro
+    )
+
     if [[ "$studio" == "yes" ]]; then
-        "$WEST" build \
-            -p always \
-            -s "$ZMK_DIR/app" \
-            -d "$build_dir" \
-            -b ble_micro_pro \
-            -S studio-rpc-usb-uart \
-            -- \
-            -DSHIELD="$shield" \
-            -DZMK_CONFIG="$PROJECT_DIR/config" \
-            -DBOARD_ROOT="$PROJECT_DIR" \
-            -DCONFIG_ZMK_STUDIO=y
-    else
-        "$WEST" build \
-            -p always \
-            -s "$ZMK_DIR/app" \
-            -d "$build_dir" \
-            -b ble_micro_pro \
-            -- \
-            -DSHIELD="$shield" \
-            -DZMK_CONFIG="$PROJECT_DIR/config" \
-            -DBOARD_ROOT="$PROJECT_DIR"
+        args+=( -S studio-rpc-usb-uart )
     fi
+
+    args+=(
+        --
+        -DSHIELD="$shield"
+        -DZMK_CONFIG="$PROJECT_DIR/config"
+        -DBOARD_ROOT="$PROJECT_DIR"
+    )
+
+    if [[ "$studio" == "yes" ]]; then
+        args+=( -DCONFIG_ZMK_STUDIO=y )
+    fi
+
+    # Run from the verified west topdir. Merely calling the west executable from
+    # the project directory is not sufficient for this v0.3 workspace.
+    (
+        cd "$ZMK_DIR"
+        west "${args[@]}"
+    )
 
     [[ -f "$uf2" ]] || fail "UF2 was not generated: $uf2"
 
@@ -120,5 +147,4 @@ esac
 echo "============================================================"
 echo "Build complete"
 echo "Left firmware includes ZMK Studio USB RPC support."
-echo "Windows destination: D:\\ZMK-Firmware\\zmk-dev\\v0.3\\corne-v2-bmp"
 echo "============================================================"
