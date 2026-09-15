@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_NAME="zmk-config-corne-v2-bmp"
+AI_DIR="$PROJECT_DIR/.ai"
+SHARE_FILE="$AI_DIR/share-latest.txt"
+TIMESTAMP="${1:-$(date '+%Y%m%d-%H%M%S')}"
+
+[[ -f "$SHARE_FILE" ]] || {
+    echo "ERROR: $SHARE_FILE not found. Run ./ai-build first." >&2
+    exit 1
+}
+
+resolve_windows_ai_dir() {
+    if [[ -n "${AI_BUILD_WINDOWS_DIR:-}" ]]; then
+        printf '%s\n' "$AI_BUILD_WINDOWS_DIR"
+        return 0
+    fi
+
+    local win_profile=""
+
+    if command -v powershell.exe >/dev/null 2>&1; then
+        win_profile="$(powershell.exe -NoProfile -Command '$env:USERPROFILE' 2>/dev/null | tr -d '\r' | tail -n 1)"
+    elif command -v cmd.exe >/dev/null 2>&1; then
+        win_profile="$(cmd.exe /C 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r' | tail -n 1)"
+    fi
+
+    [[ -n "$win_profile" ]] || return 1
+    command -v wslpath >/dev/null 2>&1 || return 1
+
+    wslpath -u "${win_profile}\\Downloads\\AI-Build"
+}
+
+WIN_AI_DIR="$(resolve_windows_ai_dir || true)"
+[[ -n "$WIN_AI_DIR" ]] || {
+    echo "ERROR: Could not resolve Windows Downloads\\AI-Build." >&2
+    echo "Set AI_BUILD_WINDOWS_DIR to a WSL path if needed." >&2
+    exit 1
+}
+
+mkdir -p "$WIN_AI_DIR"
+
+# Project-specific latest file: avoids collisions between repositories.
+cp -f "$SHARE_FILE" "$WIN_AI_DIR/${PROJECT_NAME}-share-latest.txt"
+
+# Timestamped history.
+cp -f "$SHARE_FILE" "$WIN_AI_DIR/${PROJECT_NAME}-${TIMESTAMP}.txt"
+
+# Keep the generic convenience filename used by the existing ai-build workflow.
+cp -f "$SHARE_FILE" "$WIN_AI_DIR/share-latest.txt"
+
+echo "[ai-share] Windows: $WIN_AI_DIR"
+echo "[ai-share] Latest : ${PROJECT_NAME}-share-latest.txt"
+echo "[ai-share] History: ${PROJECT_NAME}-${TIMESTAMP}.txt"
