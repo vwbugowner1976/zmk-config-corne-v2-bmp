@@ -22,8 +22,8 @@ CONFIG_FLASH_MAP=y
 CONFIG_CLOCK_CONTROL_NRF=y
 CONFIG_CLOCK_CONTROL_NRF_K32SRC_RC=y
 
-# Enable the nRF52 DC/DC converter.
-CONFIG_SOC_DCDC_NRF52X=y
+# Do not assign CONFIG_SOC_DCDC_NRF52X directly on Zephyr 3.5.
+# It is selected indirectly by board/Kconfig symbols when applicable.
 
 CONFIG_ZMK_USB=y
 CONFIG_ZMK_BLE=y
