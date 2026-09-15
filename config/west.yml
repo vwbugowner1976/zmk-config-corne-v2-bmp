@@ -1,13 +1,21 @@
 manifest:
   remotes:
-    - name: zmkfirmware
-      url-base: https://github.com/zmkfirmware
+    - name: cormoran
+      url-base: https://github.com/cormoran
+    - name: vwbugowner1976
+      url-base: https://github.com/vwbugowner1976
 
   projects:
+    # DYA's v0.3 fork stays API-compatible with ZMK v0.3 while adding the
+    # custom Studio RPC and split-relay APIs used by My ZMK Studio features.
     - name: zmk
-      remote: zmkfirmware
-      revision: v0.3.0
+      remote: cormoran
+      revision: 4493783ef88ce2e653bf8217c92ee17140df71e3
       import: app/west.yml
+
+    - name: zmk-feature-custom-settings-v03
+      remote: vwbugowner1976
+      revision: 6e5c1cd942c5bb6ea956beeffab3e24818d2c31e
 
   self:
     path: config
