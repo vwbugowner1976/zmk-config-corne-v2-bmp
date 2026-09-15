@@ -1,13 +1,16 @@
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
 #include <dt-bindings/zmk/bt.h>
-#include <dt-bindings/zmk/rgb.h>
 #include <dt-bindings/led/led.h>
 
 /*
  * Corne v2 RGB data is on Pro Micro D1.
  * Original BLE Micro Pro maps Pro Micro D1 -> nRF52840 P0.08.
  * Corne v2 uses 27 SK6812MINI LEDs per half.
+ *
+ * Lighting is controlled by the runtime Corne Lighting engine and My ZMK
+ * Studio. The old RGB behavior row on Lower is intentionally transparent so
+ * standard ZMK underglow cannot race the custom animation engine.
  *
  * ZMK Studio:
  *   - left/central firmware is built with studio-rpc-usb-uart
@@ -72,7 +75,7 @@
             bindings = <
                 &kp TAB       &kp N1       &kp N2       &kp N3       &kp N4       &kp N5         &kp N6          &kp N7          &kp N8          &kp N9          &kp N0          &kp BSPC
                 &bt BT_CLR    &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4   &kp LEFT        &kp DOWN        &kp UP          &kp RIGHT       &trans          &studio_unlock
-                &rgb_ug RGB_TOG &rgb_ug RGB_EFF &rgb_ug RGB_BRI &rgb_ug RGB_BRD &rgb_ug RGB_HUI &rgb_ug RGB_HUD &rgb_ug RGB_SAI &rgb_ug RGB_SAD &rgb_ug RGB_SPI &rgb_ug RGB_SPD &trans &trans
+                &trans        &trans        &trans        &trans        &trans        &trans          &trans          &trans          &trans          &trans          &trans          &trans
                                                     &kp LGUI  &trans  &kp SPACE                    &kp RET  &trans  &kp RALT
             >;
         };
