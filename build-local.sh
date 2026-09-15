@@ -4,6 +4,9 @@ set -euo pipefail
 # Corne v2 + original BLE Micro Pro
 # Local build helper for the existing ZMK v0.3 workspace.
 #
+# Left/central is built with ZMK Studio over USB CDC ACM.
+# Right/peripheral is built normally without Studio.
+#
 # Usage:
 #   ./build-local.sh          # left + right
 #   ./build-local.sh all
@@ -29,6 +32,7 @@ fail() {
 [[ -f "$PROJECT_DIR/config/corne.conf" ]] || fail "Missing config/corne.conf"
 [[ -f "$PROJECT_DIR/config/corne.keymap" ]] || fail "Missing config/corne.keymap"
 [[ -d "$PROJECT_DIR/boards/arm/ble_micro_pro" ]] || fail "Missing ble_micro_pro board definition"
+[[ -d "$ZMK_DIR/app/snippets/studio-rpc-usb-uart" ]] || fail "ZMK Studio snippet not found in this ZMK tree"
 [[ -x "$COPY_UF2" ]] || fail "copy-uf2 not found/executable: $COPY_UF2"
 
 mkdir -p "$BUILD_ROOT"
@@ -54,22 +58,37 @@ build_half() {
     local side="$1"
     local shield="$2"
     local out_name="$3"
+    local studio="$4"
     local build_dir="$BUILD_ROOT/$side"
     local uf2="$build_dir/zephyr/zmk.uf2"
 
     echo "------------------------------------------------------------"
-    echo "Building $side: board=ble_micro_pro shield=$shield"
+    echo "Building $side: board=ble_micro_pro shield=$shield studio=$studio"
     echo "------------------------------------------------------------"
 
-    "$WEST" build \
-        -p always \
-        -s "$ZMK_DIR/app" \
-        -d "$build_dir" \
-        -b ble_micro_pro \
-        -- \
-        -DSHIELD="$shield" \
-        -DZMK_CONFIG="$PROJECT_DIR/config" \
-        -DBOARD_ROOT="$PROJECT_DIR"
+    if [[ "$studio" == "yes" ]]; then
+        "$WEST" build \
+            -p always \
+            -s "$ZMK_DIR/app" \
+            -d "$build_dir" \
+            -b ble_micro_pro \
+            -S studio-rpc-usb-uart \
+            -- \
+            -DSHIELD="$shield" \
+            -DZMK_CONFIG="$PROJECT_DIR/config" \
+            -DBOARD_ROOT="$PROJECT_DIR" \
+            -DCONFIG_ZMK_STUDIO=y
+    else
+        "$WEST" build \
+            -p always \
+            -s "$ZMK_DIR/app" \
+            -d "$build_dir" \
+            -b ble_micro_pro \
+            -- \
+            -DSHIELD="$shield" \
+            -DZMK_CONFIG="$PROJECT_DIR/config" \
+            -DBOARD_ROOT="$PROJECT_DIR"
+    fi
 
     [[ -f "$uf2" ]] || fail "UF2 was not generated: $uf2"
 
@@ -81,17 +100,17 @@ build_half() {
 
 case "$TARGET" in
     all)
-        build_half left  corne_left  corne-v2-bmp-left.uf2
-        build_half right corne_right corne-v2-bmp-right.uf2
+        build_half left  corne_left  corne-v2-bmp-left.uf2  yes
+        build_half right corne_right corne-v2-bmp-right.uf2 no
         ;;
     left)
-        build_half left corne_left corne-v2-bmp-left.uf2
+        build_half left corne_left corne-v2-bmp-left.uf2 yes
         ;;
     right)
-        build_half right corne_right corne-v2-bmp-right.uf2
+        build_half right corne_right corne-v2-bmp-right.uf2 no
         ;;
     reset)
-        build_half reset settings_reset corne-v2-bmp-settings-reset.uf2
+        build_half reset settings_reset corne-v2-bmp-settings-reset.uf2 no
         ;;
     *)
         fail "Usage: $0 [all|left|right|reset]"
@@ -100,5 +119,6 @@ esac
 
 echo "============================================================"
 echo "Build complete"
+echo "Left firmware includes ZMK Studio USB RPC support."
 echo "Windows destination: D:\\ZMK-Firmware\\zmk-dev\\v0.3\\corne-v2-bmp"
 echo "============================================================"
