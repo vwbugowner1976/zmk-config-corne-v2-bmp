@@ -158,7 +158,7 @@ esac
 echo "============================================================"
 echo "Build complete"
 if [[ "$TARGET" == led-test-* ]]; then
-    echo "LED TEST: LEDs 1-6 stay off; LEDs 7-27 cycle red/green/blue one at a time."
+    echo "LED TEST: LEDs 1-27 stay on together at low-brightness white."
 else
     echo "Left firmware includes ZMK Studio + Custom Settings RPC."
 fi
