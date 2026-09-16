@@ -1,0 +1,21 @@
+manifest:
+  remotes:
+    - name: cormoran
+      url-base: https://github.com/cormoran
+    - name: vwbugowner1976
+      url-base: https://github.com/vwbugowner1976
+
+  projects:
+    - name: zmk
+      remote: cormoran
+      revision: v0.3-branch+dya
+      import: app/west.yml
+
+    - name: zmk-feature-custom-settings
+      remote: vwbugowner1976
+      repo-path: zmk-feature-custom-settings-v03
+      revision: main
+      path: modules/zmk-feature-custom-settings
+
+  self:
+    path: config
