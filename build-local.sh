@@ -12,6 +12,8 @@ set -euo pipefail
 #   ./build-local.sh all
 #   ./build-local.sh left
 #   ./build-local.sh right
+#   ./build-local.sh led-test-left
+#   ./build-local.sh led-test-right
 #   ./build-local.sh reset
 
 TARGET="${1:-all}"
@@ -74,12 +76,13 @@ build_half() {
     local shield="$2"
     local out_name="$3"
     local studio="$4"
+    local led_test="${5:-no}"
     local build_dir="$BUILD_ROOT/$side"
     local uf2="$build_dir/zephyr/zmk.uf2"
     local -a args
 
     echo "------------------------------------------------------------"
-    echo "Building $side: board=ble_micro_pro shield=$shield studio=$studio"
+    echo "Building $side: board=ble_micro_pro shield=$shield studio=$studio led_test=$led_test"
     echo "------------------------------------------------------------"
 
     args=(
@@ -110,6 +113,10 @@ build_half() {
         )
     fi
 
+    if [[ "$led_test" == "yes" ]]; then
+        args+=( -DCONFIG_ZMK_CORNE_LIGHTING_LED_TEST=y )
+    fi
+
     (
         cd "$ACTUAL_TOPDIR"
         west "${args[@]}"
@@ -125,24 +132,34 @@ build_half() {
 
 case "$TARGET" in
     all)
-        build_half left  corne_left  corne-v2-bmp-left.uf2  yes
-        build_half right corne_right corne-v2-bmp-right.uf2 no
+        build_half left  corne_left  corne-v2-bmp-left.uf2  yes no
+        build_half right corne_right corne-v2-bmp-right.uf2 no  no
         ;;
     left)
-        build_half left corne_left corne-v2-bmp-left.uf2 yes
+        build_half left corne_left corne-v2-bmp-left.uf2 yes no
         ;;
     right)
-        build_half right corne_right corne-v2-bmp-right.uf2 no
+        build_half right corne_right corne-v2-bmp-right.uf2 no no
+        ;;
+    led-test-left)
+        build_half led-test-left corne_left corne-v2-bmp-led-test-left.uf2 yes yes
+        ;;
+    led-test-right)
+        build_half led-test-right corne_right corne-v2-bmp-led-test-right.uf2 no yes
         ;;
     reset)
-        build_half reset settings_reset corne-v2-bmp-settings-reset.uf2 no
+        build_half reset settings_reset corne-v2-bmp-settings-reset.uf2 no no
         ;;
     *)
-        fail "Usage: $0 [all|left|right|reset]"
+        fail "Usage: $0 [all|left|right|led-test-left|led-test-right|reset]"
         ;;
 esac
 
 echo "============================================================"
 echo "Build complete"
-echo "Left firmware includes ZMK Studio + Custom Settings RPC."
+if [[ "$TARGET" == led-test-* ]]; then
+    echo "LED TEST: LEDs 1-6 stay off; LEDs 7-27 cycle red/green/blue one at a time."
+else
+    echo "Left firmware includes ZMK Studio + Custom Settings RPC."
+fi
 echo "============================================================"
