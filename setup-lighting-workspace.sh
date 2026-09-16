@@ -11,6 +11,19 @@ fail() {
     exit 1
 }
 
+fix_script_permissions() {
+    chmod +x \
+        "$PROJECT_DIR/ai-build" \
+        "$PROJECT_DIR/ai-share" \
+        "$PROJECT_DIR/build-local.sh" \
+        "$PROJECT_DIR/setup-lighting-workspace.sh" \
+        2>/dev/null || true
+}
+
+# GitHub Contents API updates can drop executable bits. Repair them whenever
+# this setup helper is invoked via `bash setup-lighting-workspace.sh`.
+fix_script_permissions
+
 [[ -f "$ENV_SH" ]] || fail "Verified v0.3 env.sh not found: $ENV_SH"
 
 # Reuse the verified Python/west environment from the existing v0.3 workspace,
@@ -64,6 +77,9 @@ echo "Updating ZMK + Lighting modules..."
 ACTUAL_TOPDIR="$(cd "$WORKSPACE/zmk" && "$WEST" topdir)"
 [[ "$ACTUAL_TOPDIR" == "$WORKSPACE" ]] || fail "Unexpected west topdir: $ACTUAL_TOPDIR"
 
+# Repair executable bits again after any manifest/update activity.
+fix_script_permissions
+
 echo
 echo "============================================================"
 echo "Corne Lighting workspace ready"
@@ -71,5 +87,6 @@ echo "Workspace : $WORKSPACE"
 echo "ZMK       : $WORKSPACE/zmk"
 echo "ZMK commit: $(git -C "$WORKSPACE/zmk" rev-parse --short HEAD)"
 echo "Project   : $PROJECT_DIR"
+echo "Scripts   : executable bits repaired"
 echo "============================================================"
 echo "Next: ./ai-build left"
