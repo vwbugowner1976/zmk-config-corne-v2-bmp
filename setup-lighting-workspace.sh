@@ -37,10 +37,13 @@ else
 
     mkdir -p "$(dirname "$WORKSPACE")"
     echo "Initializing isolated Corne Lighting workspace: $WORKSPACE"
+
+    # west 1.5 supports -t/--topdir, but the verified v0.3 environment may
+    # expose an older west CLI. The positional directory form works on both.
     "$WEST" init \
         -m "$MANIFEST_URL" \
         --mr main \
-        -t "$WORKSPACE"
+        "$WORKSPACE"
 fi
 
 echo "Updating ZMK + Lighting modules..."
