@@ -13,6 +13,8 @@ fail() {
 
 [[ -f "$ENV_SH" ]] || fail "Verified v0.3 env.sh not found: $ENV_SH"
 
+# Reuse the verified Python/west environment from the existing v0.3 workspace,
+# but never reuse its west topdir or ZEPHYR_BASE.
 # shellcheck disable=SC1090
 source "$ENV_SH"
 unset ZEPHYR_BASE || true
@@ -26,12 +28,18 @@ if [[ -d "$WORKSPACE/.west" ]]; then
         git -C "$WORKSPACE/config" pull --ff-only
     fi
 else
+    # A failed previous init can leave an empty/partial directory behind.
+    # It is safe to remove only when it is not a west workspace yet.
+    if [[ -d "$WORKSPACE" ]]; then
+        echo "Removing partial workspace from previous failed init: $WORKSPACE"
+        rm -rf "$WORKSPACE"
+    fi
+
     mkdir -p "$(dirname "$WORKSPACE")"
     echo "Initializing isolated Corne Lighting workspace: $WORKSPACE"
     "$WEST" init \
         -m "$MANIFEST_URL" \
         --mr main \
-        --mf config/west.yml \
         -t "$WORKSPACE"
 fi
 
@@ -42,12 +50,14 @@ echo "Updating ZMK + Lighting modules..."
 )
 
 [[ -d "$WORKSPACE/zmk/app" ]] || fail "ZMK project missing after west update: $WORKSPACE/zmk"
+[[ -d "$WORKSPACE/modules/zmk-feature-custom-settings" ]] || \
+    fail "Custom Settings module missing after west update"
 
 ACTUAL_TOPDIR="$(cd "$WORKSPACE/zmk" && "$WEST" topdir)"
 [[ "$ACTUAL_TOPDIR" == "$WORKSPACE" ]] || fail "Unexpected west topdir: $ACTUAL_TOPDIR"
 
 echo
- echo "============================================================"
+echo "============================================================"
 echo "Corne Lighting workspace ready"
 echo "Workspace : $WORKSPACE"
 echo "ZMK       : $WORKSPACE/zmk"
