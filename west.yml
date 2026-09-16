@@ -17,5 +17,10 @@ manifest:
       revision: main
       path: modules/zmk-feature-custom-settings
 
+    - name: zmk-behavior-jpkeysforuslayout
+      remote: vwbugowner1976
+      revision: main
+      path: modules/zmk-behavior-jpkeysforuslayout
+
   self:
     path: config
