@@ -24,9 +24,9 @@ chmod +x \
 mkdir -p "$AI_DIR"
 
 case "$TARGET" in
-    all|left|right|reset) ;;
+    all|left|right|led-test-left|led-test-right|reset) ;;
     *)
-        echo "Usage: $0 [all|left|right|reset]" >&2
+        echo "Usage: $0 [all|left|right|led-test-left|led-test-right|reset]" >&2
         exit 2
         ;;
 esac
