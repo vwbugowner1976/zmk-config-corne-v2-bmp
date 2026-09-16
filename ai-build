@@ -12,6 +12,15 @@ LATEST_CONTEXT="$AI_DIR/latest-context.txt"
 LOCAL_ANALYSIS="$AI_DIR/local-analysis.txt"
 SHARE_LATEST="$AI_DIR/share-latest.txt"
 
+# GitHub Contents API updates can drop executable bits. Repair related helpers
+# whenever ai-build is launched (including via `bash ./ai-build left`).
+chmod +x \
+    "$PROJECT_DIR/ai-build" \
+    "$PROJECT_DIR/ai-share" \
+    "$PROJECT_DIR/build-local.sh" \
+    "$PROJECT_DIR/setup-lighting-workspace.sh" \
+    2>/dev/null || true
+
 mkdir -p "$AI_DIR"
 
 case "$TARGET" in
@@ -57,11 +66,14 @@ fi
     echo
 
     echo "ZMK_GIT:"
-    if [[ -d "$HOME/zmk-dev/v0.3/zmk/.git" ]]; then
+    if [[ -d "$HOME/zmk-dev/corne-v2-bmp-v03/zmk/.git" ]]; then
+        git -C "$HOME/zmk-dev/corne-v2-bmp-v03/zmk" describe --tags --always --dirty 2>/dev/null || true
+        git -C "$HOME/zmk-dev/corne-v2-bmp-v03/zmk" rev-parse --short HEAD 2>/dev/null || true
+    elif [[ -d "$HOME/zmk-dev/v0.3/zmk/.git" ]]; then
         git -C "$HOME/zmk-dev/v0.3/zmk" describe --tags --always --dirty 2>/dev/null || true
         git -C "$HOME/zmk-dev/v0.3/zmk" rev-parse --short HEAD 2>/dev/null || true
     else
-        echo "(not found: $HOME/zmk-dev/v0.3/zmk)"
+        echo "(ZMK repo not found)"
     fi
     echo
 
@@ -70,7 +82,8 @@ fi
     echo
 
     echo "UF2_ARTIFACTS:"
-    find "$HOME/zmk-dev/v0.3/build/corne-v2-bmp" -type f -name '*.uf2' -printf '%p\n' 2>/dev/null | sort || true
+    find "$HOME/zmk-dev/corne-v2-bmp-v03/build/corne-v2-bmp" "$HOME/zmk-dev/v0.3/build/corne-v2-bmp" \
+        -type f -name '*.uf2' -printf '%p\n' 2>/dev/null | sort || true
     echo
 
     echo "BUILD_LOG_TAIL:"
