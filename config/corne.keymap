@@ -19,7 +19,7 @@
  * ZMK Studio:
  *   - left/central firmware is built with studio-rpc-usb-uart
  *   - Lower + far-right home-row key = &studio_unlock
- *   - three reserved layers are exposed for later use in Studio
+ *   - Extra 1..6 are real, editable empty layers for Studio layer testing
  */
 
 &pinctrl {
@@ -96,17 +96,62 @@
 
         studio_extra_1 {
             display-name = "Extra 1";
-            status = "reserved";
+            bindings = <
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                              &trans &trans &trans           &trans &trans &trans
+            >;
         };
 
         studio_extra_2 {
             display-name = "Extra 2";
-            status = "reserved";
+            bindings = <
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                              &trans &trans &trans           &trans &trans &trans
+            >;
         };
 
         studio_extra_3 {
             display-name = "Extra 3";
-            status = "reserved";
+            bindings = <
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                              &trans &trans &trans           &trans &trans &trans
+            >;
+        };
+
+        studio_extra_4 {
+            display-name = "Extra 4";
+            bindings = <
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                              &trans &trans &trans           &trans &trans &trans
+            >;
+        };
+
+        studio_extra_5 {
+            display-name = "Extra 5";
+            bindings = <
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                              &trans &trans &trans           &trans &trans &trans
+            >;
+        };
+
+        studio_extra_6 {
+            display-name = "Extra 6";
+            bindings = <
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
+                              &trans &trans &trans           &trans &trans &trans
+            >;
         };
     };
 };
