@@ -19,7 +19,7 @@
  * ZMK Studio:
  *   - left/central firmware is built with studio-rpc-usb-uart
  *   - Lower + far-right home-row key = &studio_unlock
- *   - Extra 1..6 are real, editable empty layers for Studio layer testing
+ *   - Extra 1..6 reserve editable layer slots for Studio layer add/remove testing
  */
 
 &pinctrl {
@@ -95,6 +95,7 @@
         };
 
         studio_extra_1 {
+            status = "disabled";
             display-name = "Extra 1";
             bindings = <
                 &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
@@ -105,6 +106,7 @@
         };
 
         studio_extra_2 {
+            status = "disabled";
             display-name = "Extra 2";
             bindings = <
                 &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
@@ -115,6 +117,7 @@
         };
 
         studio_extra_3 {
+            status = "disabled";
             display-name = "Extra 3";
             bindings = <
                 &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
@@ -125,6 +128,7 @@
         };
 
         studio_extra_4 {
+            status = "disabled";
             display-name = "Extra 4";
             bindings = <
                 &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
@@ -135,6 +139,7 @@
         };
 
         studio_extra_5 {
+            status = "disabled";
             display-name = "Extra 5";
             bindings = <
                 &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
@@ -145,6 +150,7 @@
         };
 
         studio_extra_6 {
+            status = "disabled";
             display-name = "Extra 6";
             bindings = <
                 &trans &trans &trans &trans &trans &trans   &trans &trans &trans &trans &trans &trans
